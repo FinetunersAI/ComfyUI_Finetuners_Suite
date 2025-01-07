@@ -1,0 +1,14 @@
+[project]
+name = "finetuners_suite"
+description = "A suite of nodes for ComfyUI that helps making ComfyUI more accesible for artists"
+version = "1.0.0"
+license = {file = "LICENSE"}
+
+[project.urls]
+Repository = "https://github.com/FinetunersAI/ComfyUI_Finetuners_Suite"
+#  Used by Comfy Registry https://comfyregistry.org
+
+[tool.comfy]
+PublisherId = ""
+DisplayName = "ComfyUI_Finetuners_Suite"
+Icon = ""
