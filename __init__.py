@@ -3,7 +3,9 @@ from .nodes import (
     NODE_DISPLAY_NAME_MAPPINGS,
     AutoImageResize,
     GroupLink,
-    VariablesInjector
+    VariablesInjector,
+    ModelListNode,
+    VariablesLogicNode  
 )
 
 WEB_DIRECTORY = "./web/js"
@@ -15,5 +17,7 @@ __all__ = [
     "NODE_DISPLAY_NAME_MAPPINGS",
     "AutoImageResize",
     "GroupLink",
-    "VariablesInjector"
+    "VariablesInjector",
+    "ModelListNode",
+    "VariablesLogicNode"  
 ]

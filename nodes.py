@@ -1,4 +1,7 @@
 import torch
+import os
+import csv
+
 from comfy.utils import lanczos
 
 class AutoImageResize:
@@ -106,17 +109,120 @@ class VariablesInjector:
         
         return (result,)
 
+
+class ModelListNode:
+    """Node that provides model selection from a CSV list"""
+    
+    # Class variable to store the current list of names
+    current_names = [""]
+    
+    @classmethod
+    def get_csv_path(cls):
+        """Get the CSV path from modellocation.txt"""
+        try:
+            current_dir = os.path.dirname(os.path.abspath(__file__))
+            location_file = os.path.join(current_dir, "modellocation.txt")
+            
+            if os.path.exists(location_file):
+                with open(location_file, 'r') as f:
+                    base_path = f.read().strip()
+                    csv_path = os.path.join(base_path, "modelist.csv")
+                    return csv_path
+        except Exception as e:
+            print(f"Error reading location file: {str(e)}")
+        
+        # Fallback to local directory if location file not found or invalid
+        return os.path.join(os.path.dirname(os.path.abspath(__file__)), "modelist.csv")
+    
+    @classmethod
+    def load_names_from_csv(cls):
+        """Load names from CSV file"""
+        try:
+            csv_path = cls.get_csv_path()
+            if os.path.exists(csv_path):
+                with open(csv_path, 'r', encoding='utf-8') as f:
+                    reader = csv.DictReader(f)
+                    names = [row['Name on list'] for row in reader]
+                    if names:
+                        cls.current_names = names
+                        return names
+        except Exception as e:
+            print(f"Error reading CSV: {str(e)}")
+        return [""]
+
+    @classmethod
+    def INPUT_TYPES(s):
+        s.load_names_from_csv()  # Load names when input types are requested
+        return {
+            "required": {
+                "model_name": (s.current_names, {"default": s.current_names[0] if s.current_names else ""})
+            }
+        }
+    
+    RETURN_TYPES = ("STRING", "STRING", "STRING")
+    RETURN_NAMES = ("M", "P", "S")
+    FUNCTION = "get_model_info"
+    CATEGORY = "finetuners"
+    
+    def get_model_info(self, model_name):
+        try:
+            csv_path = self.get_csv_path()
+            if os.path.exists(csv_path):
+                with open(csv_path, 'r', encoding='utf-8') as f:
+                    reader = csv.DictReader(f)
+                    for row in reader:
+                        if row['Name on list'] == model_name:
+                            # Get the path and make it a single-item list
+                            model_path = row['model path']
+                            # Add comma to make it splittable by string-to-combo
+                            if not model_path.endswith(','):
+                                model_path = model_path + ','
+                            
+                            return (
+                                model_path,  # Will be converted to COMBO by string-to-combo
+                                row['prefix'],
+                                row['sufix']
+                            )
+        except Exception as e:
+            print(f"Error reading CSV: {str(e)}")
+        
+        return ("", "", "")
+
+class VariablesLogicNode:
+    @classmethod
+    def INPUT_TYPES(s):
+        return {
+            "required": {
+                "labels": ("STRING", {"forceInput": True}),  # Force string input
+            },
+            "optional": {
+                "condition": ("BOOLEAN", {"default": False}),  # Optional boolean for toggle
+            }
+        }
+    
+    RETURN_TYPES = ("BOOLEAN",)
+    RETURN_NAMES = ("condition",)
+    FUNCTION = "execute"
+    CATEGORY = "variables/logic"
+
+    def execute(self, labels, condition=False):
+        return (condition,)
+
 # Node mappings
 NODE_CLASS_MAPPINGS = {
     "VariablesInjector": VariablesInjector,
     "AutoImageResize": AutoImageResize,
-    "GroupLink": GroupLink
+    "GroupLink": GroupLink,
+    "ModelListNode": ModelListNode,
+    "VariablesLogicNode": VariablesLogicNode
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
-    "VariablesInjector": "🔄 Variables Injector",
-    "AutoImageResize": "📐 Auto Image Resize",
-    "GroupLink": "🔗 Group Link"
+    "VariablesInjector": "Variables Injector",
+    "AutoImageResize": "Auto Image Resize",
+    "GroupLink": "Group Link",
+    "ModelListNode": "Model List",
+    "VariablesLogicNode": "Variables Logic"
 }
 
 # Informs user that nodes are loaded
