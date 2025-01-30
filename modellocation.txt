@@ -1,1 +1,1 @@
-/mnt/private/models/lora
+/mnt/private/models/lora/
